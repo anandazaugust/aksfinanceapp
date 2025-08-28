@@ -20,6 +20,14 @@ parameters:
   - name: deploynamespace
     type: boolean
     default: true
+
+  - name: whichend
+    displayName: "Which component to deploy?"
+    type: string
+    default: frontend
+    values:
+      - frontend
+      - backend
   # - name: deployserviceaccount 
   #   type: boolean
   #   default: true 
@@ -111,7 +119,7 @@ jobs:
           scriptLocation: 'inlineScript'
           inlineScript: |
             
-            kubectl apply -f ./aksyamls/frontend.yml -n $(NAMESPACE_NAME)
+                  kubectl apply -f ./aksyamls/${{ parameters.whichend }}.yml -n $(NAMESPACE_NAME)
             
         
       # - task: AzureCLI@2
