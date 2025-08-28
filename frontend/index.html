@@ -23,7 +23,7 @@
       <form id="tx-form">
         <label>
           Date
-          <input type="date" name="txDate" required />
+          <input type="date" id="txDate" name="txDate" required />
         </label>
         <label>
           Category
@@ -108,6 +108,8 @@
         if (!r.ok) throw new Error(payload.error || "Failed");
         msg.textContent = "Saved!";
         form.reset();
+        // reset date to today again after submit
+        document.getElementById("txDate").value = new Date().toISOString().split("T")[0];
         await Promise.all([loadSummary(), loadTransactions()]);
       } catch (err) {
         msg.textContent = err.message || "Failed to save";
@@ -116,6 +118,8 @@
     });
 
     document.addEventListener("DOMContentLoaded", async () => {
+      // set default date to today
+      document.getElementById("txDate").value = new Date().toISOString().split("T")[0];
       await Promise.all([loadSummary(), loadTransactions()]);
     });
   </script>
