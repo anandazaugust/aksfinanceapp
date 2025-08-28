@@ -111,7 +111,7 @@ jobs:
           scriptLocation: 'inlineScript'
           inlineScript: |
             
-            kubectl apply -f ./aksyamls/myapp.yml -n $(NAMESPACE_NAME)
+            kubectl apply -f ./aksyamls/frontend.yml -n $(NAMESPACE_NAME)
             
         
       # - task: AzureCLI@2
