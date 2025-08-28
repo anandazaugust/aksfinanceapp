@@ -1,0 +1,53 @@
+trigger: none
+pr: none
+
+pool:
+  vmImage: ubuntu-latest
+
+parameters:
+  - name: acrname
+    type: string
+    default: academo
+  - name: tier
+    type: string
+    default: 'backend'
+    values:
+      - frontend
+      - backend
+
+variables:
+  tag: $(Build.BuildId)
+  imageName: ${{ parameters.tier }}
+  dockerFilePath: ${{ parameters.tier }}/Dockerfile
+  buildContext: ./${{ parameters.tier }}
+
+jobs:
+  - job: buildAndPush
+    displayName: Build and Push to ACR
+    steps:
+      - task: AzureCLI@2
+        displayName: Login to ACR
+        inputs:
+          azureSubscription: 'myaksfeb072025'
+          scriptType: 'bash'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+            az acr login --name ${{ parameters.acrname }}
+
+      - script: |
+          echo "Building Docker image..."
+          docker build -f $(dockerFilePath) -t ${{ parameters.acrname }}.azurecr.io/$(imageName):$(tag) $(buildContext)
+        displayName: 'Build Docker Image'
+
+      - script: docker images
+        displayName: 'Show Docker Images'
+
+      - script: |
+          echo "Pushing image..."
+          docker push ${{ parameters.acrname }}.azurecr.io/$(imageName):$(tag)
+        displayName: 'Push Image with Build ID Tag'
+
+      - script: |
+          docker tag ${{ parameters.acrname }}.azurecr.io/$(imageName):$(tag) ${{ parameters.acrname }}.azurecr.io/$(imageName):latest
+          docker push ${{ parameters.acrname }}.azurecr.io/$(imageName):latest
+        displayName: 'Tag and Push Latest'
