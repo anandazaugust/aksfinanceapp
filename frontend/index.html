@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Finance Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="container">
+    <h1>Finance Tracker</h1>
+
+    <section class="summary">
+      <h2>Summary</h2>
+      <div id="summary">
+        <span>Income: —</span>
+        <span>Expense: —</span>
+        <span>Balance: —</span>
+      </div>
+    </section>
+
+    <section class="add">
+      <h2>Add Transaction</h2>
+      <form id="tx-form">
+        <label>
+          Date
+          <input type="date" name="txDate" required />
+        </label>
+        <label>
+          Category
+          <input type="text" name="category" placeholder="Groceries / Salary" required />
+        </label>
+        <label>
+          Note
+          <input type="text" name="note" placeholder="Optional" />
+        </label>
+        <label>
+          Amount
+          <input type="number" name="amount" step="0.01" required />
+        </label>
+        <p class="hint">Use negative for expense (e.g. -50), positive for income (e.g. 1000).</p>
+        <button type="submit">Add</button>
+      </form>
+      <div id="form-msg"></div>
+    </section>
+
+    <section class="list">
+      <h2>Recent Transactions</h2>
+      <table>
+        <thead>
+          <tr><th>Date</th><th>Category</th><th>Note</th><th class="right">Amount</th></tr>
+        </thead>
+        <tbody id="tx-body">
+          <tr><td colspan="4">Loading…</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <script>
+    async function loadSummary() {
+      const el = document.getElementById("summary");
+      try {
+        const r = await fetch("/api/summary");
+        const s = await r.json();
+        el.innerHTML = `
+          <span>Income: <strong>${(+s.totalIncome || 0).toFixed(2)}</strong></span>
+          <span>Expense: <strong>${(+s.totalExpense || 0).toFixed(2)}</strong></span>
+          <span>Balance: <strong>${(+s.balance || 0).toFixed(2)}</strong></span>
+        `;
+      } catch {
+        el.innerHTML = "<span class='error'>Failed to load summary</span>";
+      }
+    }
+
+    async function loadTransactions() {
+      const body = document.getElementById("tx-body");
+      try {
+        const r = await fetch("/api/transactions");
+        const items = await r.json();
+        if (!Array.isArray(items)) throw new Error("Bad payload");
+        body.innerHTML = items.map(tx => `
+          <tr>
+            <td>${new Date(tx.TxDate || tx.txDate).toISOString().slice(0,10)}</td>
+            <td>${tx.Category ?? ""}</td>
+            <td>${tx.Note ?? ""}</td>
+            <td class="right ${tx.Amount < 0 ? "neg" : "pos"}">${(+tx.Amount).toFixed(2)}</td>
+          </tr>
+        `).join("");
+      } catch {
+        body.innerHTML = `<tr><td colspan="4" class="error">Failed to load transactions</td></tr>`;
+      }
+    }
+
+    document.getElementById("tx-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById("form-msg");
+      const form = e.target;
+      const data = Object.fromEntries(new FormData(form).entries());
+      data.amount = parseFloat(data.amount);
+
+      try {
+        const r = await fetch("/api/transactions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+        const payload = await r.json();
+        if (!r.ok) throw new Error(payload.error || "Failed");
+        msg.textContent = "Saved!";
+        form.reset();
+        await Promise.all([loadSummary(), loadTransactions()]);
+      } catch (err) {
+        msg.textContent = err.message || "Failed to save";
+        msg.className = "error";
+      }
+    });
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      await Promise.all([loadSummary(), loadTransactions()]);
+    });
+  </script>
+</body>
+</html>
