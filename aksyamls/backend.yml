@@ -22,7 +22,7 @@ kind: Service
 metadata:
   name: financeappbackend-svc
 spec:
-  # type: LoadBalancer
+  type: LoadBalancer
   selector:
     app: financeappbackend
   ports: 
