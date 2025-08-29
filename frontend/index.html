@@ -18,16 +18,17 @@
       </div>
     </section>
 
+    <!-- EXPENSE FORM -->
     <section class="add">
-      <h2>Add Transaction</h2>
-      <form id="tx-form">
+      <h2>Add Expense</h2>
+      <form id="expense-form">
         <label>
           Date
-          <input type="date" id="txDate" name="txDate" required />
+          <input type="date" name="txDate" required />
         </label>
         <label>
           Category
-          <input type="text" name="category" placeholder="Groceries / Salary" required />
+          <input type="text" name="category" placeholder="Groceries / Rent" required />
         </label>
         <label>
           Note
@@ -37,10 +38,34 @@
           Amount
           <input type="number" name="amount" step="0.01" required />
         </label>
-        <p class="hint">Use negative for expense (e.g. -50), positive for income (e.g. 1000).</p>
-        <button type="submit">Add</button>
+        <button type="submit">Add Expense</button>
       </form>
-      <div id="form-msg"></div>
+      <div id="expense-msg"></div>
+    </section>
+
+    <!-- INCOME FORM -->
+    <section class="add">
+      <h2>Add Income</h2>
+      <form id="income-form">
+        <label>
+          Date
+          <input type="date" name="txDate" required />
+        </label>
+        <label>
+          Category
+          <input type="text" name="category" placeholder="Salary / Bonus" required />
+        </label>
+        <label>
+          Note
+          <input type="text" name="note" placeholder="Optional" />
+        </label>
+        <label>
+          Amount
+          <input type="number" name="amount" step="0.01" required />
+        </label>
+        <button type="submit">Add Income</button>
+      </form>
+      <div id="income-msg"></div>
     </section>
 
     <section class="list">
@@ -91,36 +116,45 @@
       }
     }
 
-    document.getElementById("tx-form").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const msg = document.getElementById("form-msg");
-      const form = e.target;
-      const data = Object.fromEntries(new FormData(form).entries());
-      data.amount = parseFloat(data.amount);
+    async function submitForm(formId, msgId, type) {
+      const form = document.getElementById(formId);
+      const msg = document.getElementById(msgId);
 
-      try {
-        const r = await fetch("/api/transactions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data)
-        });
-        const payload = await r.json();
-        if (!r.ok) throw new Error(payload.error || "Failed");
-        msg.textContent = "Saved!";
-        form.reset();
-        // reset date to today again after submit
-        document.getElementById("txDate").value = new Date().toISOString().split("T")[0];
-        await Promise.all([loadSummary(), loadTransactions()]);
-      } catch (err) {
-        msg.textContent = err.message || "Failed to save";
-        msg.className = "error";
-      }
-    });
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const data = Object.fromEntries(new FormData(form).entries());
+        data.amount = parseFloat(data.amount);
+        data.type = type; // 👈 force type (expense/income)
+
+        try {
+          const r = await fetch("/api/transactions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+          });
+          const payload = await r.json();
+          if (!r.ok) throw new Error(payload.error || "Failed");
+          msg.textContent = "Saved!";
+          msg.className = "success";
+          form.reset();
+          form.querySelector("input[name=txDate]").value = new Date().toISOString().split("T")[0];
+          await Promise.all([loadSummary(), loadTransactions()]);
+        } catch (err) {
+          msg.textContent = err.message || "Failed to save";
+          msg.className = "error";
+        }
+      });
+    }
 
     document.addEventListener("DOMContentLoaded", async () => {
       // set default date to today
-      document.getElementById("txDate").value = new Date().toISOString().split("T")[0];
+      document.querySelectorAll("input[name=txDate]").forEach(el => {
+        el.value = new Date().toISOString().split("T")[0];
+      });
+
       await Promise.all([loadSummary(), loadTransactions()]);
+      submitForm("expense-form", "expense-msg", "expense");
+      submitForm("income-form", "income-msg", "income");
     });
   </script>
 </body>
