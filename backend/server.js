@@ -36,7 +36,18 @@ app.get("/api/transactions", async (_req, res) => {
   try {
     const pool = await getPool();
     const result = await pool.request()
-      .query("SELECT TOP 100 Id, TxDate, Category, Note, Amount, CreatedAt FROM Transactions ORDER BY CreatedAt DESC");
+      .query(`
+        SELECT TOP 100 
+          Id, 
+          TxDate, 
+          Category, 
+          Note, 
+          Amount, 
+          CreatedAt,
+          CASE WHEN Amount < 0 THEN 'expense' ELSE 'income' END AS Type
+        FROM Transactions 
+        ORDER BY CreatedAt DESC
+      `);
     res.json(result.recordset);
   } catch (err) {
     console.error("GET /api/transactions error:", err);
@@ -47,11 +58,19 @@ app.get("/api/transactions", async (_req, res) => {
 // Create a transaction
 app.post("/api/transactions", async (req, res) => {
   try {
-    const { txDate, category, note, amount } = req.body;
+    const { txDate, category, note, amount, type } = req.body;
 
     // Basic validation
     if (!txDate || !category || typeof amount !== "number") {
       return res.status(400).json({ error: "txDate, category, amount are required" });
+    }
+
+    // By default treat as expense → store negative
+    let finalAmount = -Math.abs(amount);
+
+    // If explicitly marked income, store as positive
+    if (type === "income") {
+      finalAmount = Math.abs(amount);
     }
 
     const pool = await getPool();
@@ -59,10 +78,16 @@ app.post("/api/transactions", async (req, res) => {
       .input("txDate", sql.Date, txDate)
       .input("category", sql.NVarChar(100), category)
       .input("note", sql.NVarChar(400), note || null)
-      .input("amount", sql.Decimal(18, 2), amount)
+      .input("amount", sql.Decimal(18, 2), finalAmount)
       .query(`
         INSERT INTO Transactions (TxDate, Category, Note, Amount)
-        OUTPUT INSERTED.Id, INSERTED.TxDate, INSERTED.Category, INSERTED.Note, INSERTED.Amount, INSERTED.CreatedAt
+        OUTPUT INSERTED.Id, 
+               INSERTED.TxDate, 
+               INSERTED.Category, 
+               INSERTED.Note, 
+               INSERTED.Amount, 
+               INSERTED.CreatedAt,
+               CASE WHEN INSERTED.Amount < 0 THEN 'expense' ELSE 'income' END AS Type
         VALUES (@txDate, @category, @note, @amount);
       `);
 
