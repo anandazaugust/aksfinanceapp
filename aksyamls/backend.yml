@@ -15,10 +15,10 @@ spec:
    
       containers:
       - name: financeapp
-        image: aksfinance.azurecr.io/backend:1732
+        image: aksfinance.azurecr.io/backend:latest
         env: 
          - name: SQL_CONNECTION
-           value:  "Server=tcp:sqlk1s.database.windows.net,1433;Initial Catalog=aks;Persist Security Info=False;User ID=sqladmin;Password=unilever@123;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
+           value:  "Server=tcp:myaks.database.windows.net,1433;Initial Catalog=aksdb;Persist Security Info=False;User ID=sqladmin;Password=unilever@123;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
 ---
 apiVersion: v1
 kind: Service 
