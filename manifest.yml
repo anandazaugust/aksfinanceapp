@@ -120,7 +120,7 @@ jobs:
           scriptLocation: 'inlineScript'
           inlineScript: |
             
-                  kubectl apply -f ./aksyamls/${{ parameters.whichend }}.yml -n ${{ parameters.whichend }}-namespace
+                  kubectl apply -f ./aksyamls/${{ parameters.whichend }}.yml -n ${{ parameters.whichend }}
             
         
       # - task: AzureCLI@2
