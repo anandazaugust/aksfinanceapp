@@ -78,7 +78,7 @@ jobs:
 
       - script: |
               # sed -i "s|#{SERVICE_ACCOUNT_NAME}#|$(SERVICE_ACCOUNT_NAME)|g" ./aksyamls/svc.yml
-              sed -i "s|#{app_NAMESPACE_NAME}#|$(NAMESPACE_NAME)|g" ./aksyamls/namespace.yml
+              # sed -i "s|#{app_NAMESPACE_NAME}#|$(NAMESPACE_NAME)|g" ./aksyamls/namespace.yml
               # sed -i "s|#{USER_ASSIGNED_CLIENT_ID}#|$(USER_ASSIGNED_CLIENT_ID)|g" ./aksyamls/svc.yml
               # sed -i "s|#{USER_ASSIGNED_CLIENT_ID}#|$(USER_ASSIGNED_CLIENT_ID)|g" ./aksyamls/scaledobj.yml
         displayName: 'Replace variables Name in Manifest'
@@ -92,7 +92,7 @@ jobs:
           inlineScript: |
             
             kubectl get pods 
-            kubectl apply -f ./aksyamls/namespace.yml
+            kubectl apply -f ./aksyamls/{{ parameters.whichend }}-namespace.yml
             
         displayName: 'List AKS resources & create namespace'
 
@@ -119,7 +119,7 @@ jobs:
           scriptLocation: 'inlineScript'
           inlineScript: |
             
-                  kubectl apply -f ./aksyamls/${{ parameters.whichend }}.yml -n $(NAMESPACE_NAME)
+                  kubectl apply -f ./aksyamls/${{ parameters.whichend }}.yml -n {{ parameters.whichend }}
             
         
       # - task: AzureCLI@2
