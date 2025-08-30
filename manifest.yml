@@ -92,7 +92,8 @@ jobs:
           inlineScript: |
             
             kubectl get pods 
-            kubectl apply -f ./aksyamls/{{ parameters.whichend }}-namespace.yml
+            kubectl apply -f ./aksyamls/${{ parameters.whichend }}-namespace.yml
+            
             
         displayName: 'List AKS resources & create namespace'
 
@@ -119,7 +120,7 @@ jobs:
           scriptLocation: 'inlineScript'
           inlineScript: |
             
-                  kubectl apply -f ./aksyamls/${{ parameters.whichend }}.yml -n {{ parameters.whichend }}-namespace
+                  kubectl apply -f ./aksyamls/${{ parameters.whichend }}.yml -n ${{ parameters.whichend }}-namespace
             
         
       # - task: AzureCLI@2
