@@ -18,7 +18,8 @@ spec:
         image: aksfinance.azurecr.io/frontend:1735
         env: 
          - name: BACKEND_URL
-           value: http://10.10.115.68
+           value: http://10.10.150.207
+
 ---
 apiVersion: v1
 kind: Service 
