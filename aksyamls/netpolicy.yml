@@ -14,7 +14,7 @@ spec:
   - from:
     - podSelector:
         matchLabels:
-          app: financeapp2   # 👈 only allow pods with this label
+          app: financeapp   # 👈 only allow pods with this label
     ports:
     - protocol: TCP
       port: 3000                    # 👈 backend app port
