@@ -18,7 +18,7 @@ spec:
         image: aksfinance.azurecr.io/frontend:latest
         env: 
          - name: BACKEND_URL
-           value: http://financeappbackend.backend.svc.cluster.local
+           value: http://financeappbackend-svc.backend.svc.cluster.local
 
 ---
 apiVersion: v1
