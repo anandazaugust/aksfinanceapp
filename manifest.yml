@@ -32,6 +32,9 @@ parameters:
   - name: deploynetpolicy
     type: boolean
     default: true
+  - name: clustername 
+    type: string
+    
 
   # - name: deployserviceaccount 
   #   type: boolean
@@ -74,7 +77,7 @@ jobs:
           scriptLocation: 'inlineScript'
           inlineScript: |
            
-            az aks get-credentials --resource-group testrg --name aks-cluster-1 
+            az aks get-credentials --resource-group testrg --name ${{ parameters.clustername }}
             kubelogin convert-kubeconfig -l azurecli
           
         
