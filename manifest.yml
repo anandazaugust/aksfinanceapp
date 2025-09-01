@@ -29,7 +29,7 @@ parameters:
       - frontend
       - backend
 
-  - name: netpolicy
+  - name: deploynetpolicy
     type: boolean
     default: true
 
