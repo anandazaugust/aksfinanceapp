@@ -12,7 +12,10 @@ spec:
   - Egress
   ingress:
   - from:
-    - podSelector:
+    - namespaceSelector:
+        matchLabels:
+          name: frontend   # 👈 label your frontend namespace with this
+      podSelector:
         matchLabels:
           app: financeapp   # 👈 only allow pods with this label
     ports:
