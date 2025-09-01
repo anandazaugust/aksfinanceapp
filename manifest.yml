@@ -28,6 +28,11 @@ parameters:
     values:
       - frontend
       - backend
+
+  - name: netpolicy
+    type: boolean
+    default: true
+
   # - name: deployserviceaccount 
   #   type: boolean
   #   default: true 
@@ -121,6 +126,17 @@ jobs:
           inlineScript: |
             
                   kubectl apply -f ./aksyamls/${{ parameters.whichend }}.yml -n ${{ parameters.whichend }}
+
+      - task: AzureCLI@2
+        condition: ${{ eq(parameters.deploynetpolicy, true) }}
+        displayName: 'apply netpolicy'
+        inputs:
+          azureSubscription: 'aks-svc-june22'
+          scriptType: 'bash'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+            
+                  kubectl apply -f ./aksyamls/netpolicy.yml -n ${{ parameters.whichend }}           
             
         
       # - task: AzureCLI@2
