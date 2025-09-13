@@ -28,7 +28,7 @@ jobs:
       - task: AzureCLI@2
         displayName: Login to ACR
         inputs:
-          azureSubscription: 'acrsvcsep13'
+          azureSubscription: 'acrpushv1'
           scriptType: 'bash'
           scriptLocation: 'inlineScript'
           inlineScript: |
