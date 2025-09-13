@@ -16,10 +16,13 @@ spec:
       containers:
       - name: financeapp
         image: aksfinance.azurecr.io/backend:latest
-        env: 
-         - name: SQL_CONNECTION
-           value:  Server=tcp:aksme.database.windows.net,1433;Initial Catalog=aksme;Persist Security Info=False;User ID=sqladmin;Password=unilever@123;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;
-           
+        env:
+        - name: SQL_CONNECTION
+          valueFrom:
+            secretKeyRef:
+              name: sql-connection-secret   # the name of your Secret
+              key: SQL_CONNECTION           # the key inside the Secret
+
 ---
 apiVersion: v1
 kind: Service 

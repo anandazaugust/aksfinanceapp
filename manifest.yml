@@ -8,11 +8,13 @@ variables:
     value: 'frontend'
   - name: TENANT_ID
     value: '17a09c66-f406-4897-8b24-51f5313623dc'
+  - name: SQL_CONNECTION
+    value: ${{ variables.SQL_CONNECTION }}
 
 parameters:
-  # - name: deployScaledObject
-  #   type: boolean
-  #   default: true
+  - name: deploysecret
+    type: boolean
+    default: true
   - name: deploymyapp
     type: boolean
     default: true
@@ -89,6 +91,7 @@ jobs:
               # sed -i "s|#{app_NAMESPACE_NAME}#|$(NAMESPACE_NAME)|g" ./aksyamls/namespace.yml
               # sed -i "s|#{USER_ASSIGNED_CLIENT_ID}#|$(USER_ASSIGNED_CLIENT_ID)|g" ./aksyamls/svc.yml
               # sed -i "s|#{USER_ASSIGNED_CLIENT_ID}#|$(USER_ASSIGNED_CLIENT_ID)|g" ./aksyamls/scaledobj.yml
+               sed -i "s|#{sql_connection}#|$(SQL_CONNECTION)|g" ./aksyamls/secret.yml
         displayName: 'Replace variables Name in Manifest'
 
       - task: AzureCLI@2
@@ -117,6 +120,18 @@ jobs:
       #       kubectl apply -f ./aksyamls/svc.yml -n $(NAMESPACE_NAME)
             
       #   displayName: 'Create Service Account'
+
+      - task: AzureCLI@2
+        condition: ${{ eq(parameters.deploysecret, true) }}
+        displayName: 'apply secret'
+        inputs:
+          azureSubscription: 'acrsvcsep13'
+          scriptType: 'bash'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+            
+                  kubectl apply -f ./aksyamls/secret.yml
+
 
 
       - task: AzureCLI@2
