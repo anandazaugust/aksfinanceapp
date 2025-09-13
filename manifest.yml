@@ -8,8 +8,7 @@ variables:
     value: 'frontend'
   - name: TENANT_ID
     value: '17a09c66-f406-4897-8b24-51f5313623dc'
-  - name: SQL_CONNECTION
-    value: ${{ variables.SQL_CONNECTION }}
+
 
 parameters:
   - name: deploysecret
@@ -91,7 +90,7 @@ jobs:
               # sed -i "s|#{app_NAMESPACE_NAME}#|$(NAMESPACE_NAME)|g" ./aksyamls/namespace.yml
               # sed -i "s|#{USER_ASSIGNED_CLIENT_ID}#|$(USER_ASSIGNED_CLIENT_ID)|g" ./aksyamls/svc.yml
               # sed -i "s|#{USER_ASSIGNED_CLIENT_ID}#|$(USER_ASSIGNED_CLIENT_ID)|g" ./aksyamls/scaledobj.yml
-               sed -i "s|#{sql_connection}#|$(SQL_CONNECTION)|g" ./aksyamls/secret.yml
+               sed -i "s|#{SQL_CONNECTION}#|$(SQL_CONNECTION)|g" ./aksyamls/secret.yml
         displayName: 'Replace variables Name in Manifest'
 
       - task: AzureCLI@2
