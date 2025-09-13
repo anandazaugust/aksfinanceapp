@@ -72,7 +72,7 @@ jobs:
       - task: AzureCLI@2
         displayName: 'Get AKS credentials'
         inputs:
-          azureSubscription: 'aks-svc-june22'
+          azureSubscription: 'acrsvcsep13'
           scriptType: 'bash'
           scriptLocation: 'inlineScript'
           inlineScript: |
@@ -94,7 +94,7 @@ jobs:
       - task: AzureCLI@2
         condition:  ${{ eq(parameters.deploynamespace, true) }}
         inputs:
-          azureSubscription: 'aks-svc-june22'
+          azureSubscription: 'acrsvcsep13'
           scriptType: 'bash'
           scriptLocation: 'inlineScript'
           inlineScript: |
