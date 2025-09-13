@@ -123,7 +123,7 @@ jobs:
         condition: ${{ eq(parameters.deploymyapp, true) }}
         displayName: 'apply myapp manifest'
         inputs:
-          azureSubscription: 'aks-svc-june22'
+          azureSubscription: 'acrsvcsep13'
           scriptType: 'bash'
           scriptLocation: 'inlineScript'
           inlineScript: |
