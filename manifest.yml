@@ -73,7 +73,7 @@ jobs:
       - task: AzureCLI@2
         displayName: 'Get AKS credentials'
         inputs:
-          azureSubscription: 'acrsvcsep13'
+          azureSubscription: 'acrpushv1'
           scriptType: 'bash'
           scriptLocation: 'inlineScript'
           inlineScript: |
@@ -96,7 +96,7 @@ jobs:
       - task: AzureCLI@2
         condition:  ${{ eq(parameters.deploynamespace, true) }}
         inputs:
-          azureSubscription: 'acrsvcsep13'
+          azureSubscription: 'acrpushv1'
           scriptType: 'bash'
           scriptLocation: 'inlineScript'
           inlineScript: |
@@ -124,7 +124,7 @@ jobs:
         condition: ${{ eq(parameters.deploysecret, true) }}
         displayName: 'apply secret'
         inputs:
-          azureSubscription: 'acrsvcsep13'
+          azureSubscription: 'acrpushv1'
           scriptType: 'bash'
           scriptLocation: 'inlineScript'
           inlineScript: |
@@ -137,7 +137,7 @@ jobs:
         condition: ${{ eq(parameters.deploymyapp, true) }}
         displayName: 'apply myapp manifest'
         inputs:
-          azureSubscription: 'acrsvcsep13'
+          azureSubscription: 'acrpushv1'
           scriptType: 'bash'
           scriptLocation: 'inlineScript'
           inlineScript: |
