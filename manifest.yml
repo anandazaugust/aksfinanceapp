@@ -1,13 +1,4 @@
-#aksauth
-variables:
-  - name: USER_ASSIGNED_CLIENT_ID
-    value: 'a699272b-3aa5-439b-baae-6abec0abbcd6'
-  - name: SERVICE_ACCOUNT_NAME
-    value: 'kedasvc'
-  - name: NAMESPACE_NAME
-    value: 'frontend'
-  - name: TENANT_ID
-    value: '17a09c66-f406-4897-8b24-51f5313623dc'
+
 
 
 parameters:
@@ -30,28 +21,10 @@ parameters:
       - frontend
       - backend
 
-  - name: deploynetpolicy
-    type: boolean
-    default: true
+
   - name: clustername 
     type: string
     
-
-  # - name: deployserviceaccount 
-  #   type: boolean
-  #   default: true 
- 
-  # - name: deployingress
-  #   type: boolean
-  #   default: false
-  # - name: deployconfigmap
-  #   type: boolean
-  #   default: true
-  # - name: deploynginxhelm
-  #   type: boolean
-  #   default: true
-  
-
 
 trigger: none
 pr: none
@@ -81,15 +54,8 @@ jobs:
             az aks get-credentials --resource-group testrg --name ${{ parameters.clustername }}
             kubelogin convert-kubeconfig -l azurecli
           
-        
-        
-
 
       - script: |
-              # sed -i "s|#{SERVICE_ACCOUNT_NAME}#|$(SERVICE_ACCOUNT_NAME)|g" ./aksyamls/svc.yml
-              # sed -i "s|#{app_NAMESPACE_NAME}#|$(NAMESPACE_NAME)|g" ./aksyamls/namespace.yml
-              # sed -i "s|#{USER_ASSIGNED_CLIENT_ID}#|$(USER_ASSIGNED_CLIENT_ID)|g" ./aksyamls/svc.yml
-              # sed -i "s|#{USER_ASSIGNED_CLIENT_ID}#|$(USER_ASSIGNED_CLIENT_ID)|g" ./aksyamls/scaledobj.yml
                sed -i "s|#{SQL_CONNECTION}#|$(SQL_CONNECTION)|g" ./aksyamls/secret.yml
         displayName: 'Replace variables Name in Manifest'
 
@@ -107,18 +73,6 @@ jobs:
             
         displayName: 'List AKS resources & create namespace'
 
-      # - task: AzureCLI@2
-      #   condition:  ${{ eq(parameters.deployserviceaccount, true) }}
-
-      #   inputs:
-      #     azureSubscription: 'aks-svc-june22'
-      #     scriptType: 'bash'
-      #     scriptLocation: 'inlineScript'
-      #     inlineScript: |
-            
-      #       kubectl apply -f ./aksyamls/svc.yml -n $(NAMESPACE_NAME)
-            
-      #   displayName: 'Create Service Account'
 
       - task: AzureCLI@2
         condition: ${{ eq(parameters.deploysecret, true) }}
@@ -144,62 +98,5 @@ jobs:
             
                   kubectl apply -f ./aksyamls/${{ parameters.whichend }}.yml -n ${{ parameters.whichend }}
 
-      - task: AzureCLI@2
-        condition: ${{ eq(parameters.deploynetpolicy, true) }}
-        displayName: 'apply netpolicy'
-        inputs:
-          azureSubscription: 'aks-svc-june22'
-          scriptType: 'bash'
-          scriptLocation: 'inlineScript'
-          inlineScript: |
-            
-                  kubectl apply -f ./aksyamls/netpolicy.yml -n ${{ parameters.whichend }}           
-            
         
-      # - task: AzureCLI@2
-      #   condition: ${{ eq(parameters.deployscaledobject, true) }}
-      #   displayName: 'apply scaled object manifest'
-      #   inputs:
-      #     azureSubscription: 'aks-svc-june22'
-      #     scriptType: 'bash'
-      #     scriptLocation: 'inlineScript'
-      #     inlineScript: |
-            
-      #       kubectl apply -f ./aksyamls/scaledobj.yml -n $(NAMESPACE_NAME)
-
-      # - task: AzureCLI@2
-      #   condition: ${{ eq(parameters.deployconfigmap, true) }}
-      #   displayName: 'apply configmap manifest'
-      #   inputs:
-      #     azureSubscription: 'aks-svc-june22'
-      #     scriptType: 'bash'
-      #     scriptLocation: 'inlineScript'
-      #     inlineScript: |
-            
-      #       kubectl apply -f ./aksyamls/configmap.yml -n kube-system
-
-        
-      # - task: AzureCLI@2
-      #   condition: ${{ eq(parameters.deploynginxhelm, true) }}  
-      #   displayName: 'Install NGINX ingress controller via Helm'
-      #   inputs:
-      #     azureSubscription: 'aks-svc-june22'
-      #     scriptType: 'bash'
-      #     scriptLocation: 'scriptPath'
-      #     scriptPath: 'aksyamls/nginx.sh'
-      #     arguments: '$(NAMESPACE_NAME) '
-               
-
-
-      # - task: AzureCLI@2
-      #   condition: ${{ eq(parameters.deployingress, true) }}
-      #   displayName: 'apply ingress manifest'
-      #   inputs:
-      #     azureSubscription: 'aks-svc-june22'
-      #     scriptType: 'bash'
-      #     scriptLocation: 'inlineScript'
-      #     inlineScript: |
-            
-      #       kubectl apply -f ./aksyamls/ingress2.yml -n $(NAMESPACE_NAME)
-            
         
