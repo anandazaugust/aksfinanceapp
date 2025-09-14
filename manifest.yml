@@ -1,0 +1,102 @@
+
+
+
+parameters:
+  - name: deploysecret
+    type: boolean
+    default: true
+  - name: deploymyapp
+    type: boolean
+    default: true
+
+  - name: deploynamespace
+    type: boolean
+    default: true
+
+  - name: whichend
+    displayName: "Which component to deploy?"
+    type: string
+    default: frontend
+    values:
+      - frontend
+      - backend
+
+
+  - name: clustername 
+    type: string
+    
+
+trigger: none
+pr: none
+pool:
+  vmImage: ubuntu-latest
+
+jobs: 
+
+  - job: aksdeploy
+    displayName: AKSdepoy
+    timeoutInMinutes: 10 # how long to run the job before automatically cancelling
+    cancelTimeoutInMinutes: 2 # how much time to give 'run always even if cancelled tasks' before stopping them
+    steps:
+      - task: KubeloginInstaller@0
+        inputs:
+          kubeloginVersion: 'latest'
+        displayName: installkubelogin
+      
+      - task: AzureCLI@2
+        displayName: 'Get AKS credentials'
+        inputs:
+          azureSubscription: 'acrpushv1'
+          scriptType: 'bash'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+           
+            az aks get-credentials --resource-group testrg --name ${{ parameters.clustername }}
+            kubelogin convert-kubeconfig -l azurecli
+          
+
+      - script: |
+               sed -i "s|#{SQL_CONNECTION}#|$(SQL_CONNECTION)|g" ./aksyamls/secret.yml
+        displayName: 'Replace variables Name in Manifest'
+
+      - task: AzureCLI@2
+        condition:  ${{ eq(parameters.deploynamespace, true) }}
+        inputs:
+          azureSubscription: 'acrpushv1'
+          scriptType: 'bash'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+            
+            kubectl get pods 
+            kubectl apply -f ./aksyamls/${{ parameters.whichend }}-namespace.yml
+            
+            
+        displayName: 'List AKS resources & create namespace'
+
+
+      - task: AzureCLI@2
+        condition: ${{ eq(parameters.deploysecret, true) }}
+        displayName: 'apply secret'
+        inputs:
+          azureSubscription: 'acrpushv1'
+          scriptType: 'bash'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+            
+                  kubectl apply -f ./aksyamls/secret.yml
+
+
+
+      - task: AzureCLI@2
+        condition: ${{ eq(parameters.deploymyapp, true) }}
+        displayName: 'apply myapp manifest'
+        inputs:
+          azureSubscription: 'acrpushv1'
+          scriptType: 'bash'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+            
+                  kubectl apply -f ./aksyamls/${{ parameters.whichend }}.yml -n ${{ parameters.whichend }}
+
+        
+        

@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: financeapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: financeapp
+  template:
+    metadata:
+      labels:
+        app: financeapp
+    spec:
+   
+      containers:
+      - name: financeapp
+        image: aksfinance.azurecr.io/frontend:latest
+        env: 
+         - name: BACKEND_URL
+           value: http://financeappbackend-svc.backend.svc.cluster.local
+
+---
+apiVersion: v1
+kind: Service 
+metadata:
+  name: financeapp-svc
+spec:
+  type: LoadBalancer
+  selector:
+    app: financeapp
+  ports: 
+    - name: http
+      port: 80
+      targetPort: 5000

@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: financeappbackend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: financeappbackend
+  template:
+    metadata:
+      labels:
+        app: financeappbackend
+    spec:
+   
+      containers:
+      - name: financeapp
+        image: aksfinance.azurecr.io/backend:latest
+        env:
+        - name: SQL_CONNECTION
+          valueFrom:
+            secretKeyRef:
+              name: sql-connection-secret   # the name of your Secret
+              key: SQL_CONNECTION           # the key inside the Secret
+
+---
+apiVersion: v1
+kind: Service 
+metadata:
+  name: financeappbackend-svc
+spec:
+  # type: LoadBalancer
+  selector:
+    app: financeappbackend
+  ports: 
+    - name: http
+      port: 80
+      targetPort: 3000

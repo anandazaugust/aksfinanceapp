@@ -1,0 +1,16 @@
+body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:#0b1220; color:#f3f6ff; margin:0; }
+.container { max-width: 900px; margin: 40px auto; padding: 0 16px; }
+h1 { margin: 0 0 16px; }
+section { background:#131c31; padding:16px; border-radius:12px; margin-bottom:16px; }
+h2 { margin-top:0; }
+#summary span { margin-right: 16px; display:inline-block; }
+form { display:grid; grid-template-columns: repeat(2, minmax(200px, 1fr)); gap:12px; }
+form label { display:flex; flex-direction:column; font-size:14px; }
+.hint { grid-column: 1 / -1; opacity:.8; margin:0; }
+button { grid-column: 1 / -1; padding:10px 14px; border:0; border-radius:8px; cursor:pointer; }
+table { width:100%; border-collapse: collapse; }
+th, td { padding:10px; border-bottom:1px solid #232c45; }
+.right { text-align:right; }
+.pos { color:#55d68f; }
+.neg { color:#ff6f6f; }
+.error { color:#ff6f6f; }
