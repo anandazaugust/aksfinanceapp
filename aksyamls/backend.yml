@@ -16,12 +16,25 @@ spec:
       containers:
       - name: financeapp
         image: aksfinance.azurecr.io/backend:latest
+      #   volumeMounts:
+      # - name: secrecy
+      #   mountPath: "/mnt/secrets-store"
+      #   readOnly: true
+        
         env:
         - name: SQL_CONNECTION
           valueFrom:
             secretKeyRef:
-              name: sql-connection-secret   # the name of your Secret
-              key: SQL_CONNECTION           # the key inside the Secret
+              name: SQL_CONNECTION   # the name of your Secret
+              key: SQL_CONNECTION_KEY          # the key inside the Secret
+
+      # volumes:
+      #   - name: secrecy
+      #     csi:
+      #       driver: secrets-store.csi.k8s.io
+      #       readOnly: true
+      #       volumeAttributes:
+      #         secretProviderClass: "sqlsecretclass"
 
 ---
 apiVersion: v1
