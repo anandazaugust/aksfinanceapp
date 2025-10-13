@@ -13,6 +13,10 @@ parameters:
     type: boolean
     default: true
 
+  - name: deploysecretclass
+    type: boolean
+    default: true
+
   - name: whichend
     displayName: "Which component to deploy?"
     type: string
