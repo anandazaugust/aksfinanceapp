@@ -15,13 +15,13 @@ spec:
    
       containers:
       - name: financeapp
-        image: aksfinance.azurecr.io/backend:latest
+        image: aksfinance1.azurecr.io/backend:latest
         env:
         - name: SQL_CONNECTION
           valueFrom:
             secretKeyRef:
-              name: sql_connection  # the name of your Secret
-              key: sql_connection_key       # the key inside the Secret
+              name: SQL-CONNECTION  # the name of your Secret
+              key: SQL_CONNECTION_KEY      # the key inside the Secret
         volumeMounts:
           - name: volume112
             mountPath: "/mnt/secrets-store"
