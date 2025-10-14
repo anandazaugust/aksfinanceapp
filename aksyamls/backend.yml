@@ -16,6 +16,19 @@ spec:
       containers:
       - name: financeapp
         image: aksfinance.azurecr.io/backend:latest
+        # volumeMounts:
+        #   - name: volume112
+        #     mountPath: "/mnt/secrets-store"
+        #     readOnly: true
+
+      # volumes:
+      #   - name: volume112
+      #     csi:
+      #       driver: secrets-store.csi.k8s.io
+      #       readOnly: true
+      #       volumeAttributes:
+      #         secretProviderClass: "sqlsecretclass"  
+
       #   volumeMounts:
       # - name: secrecy
       #   mountPath: "/mnt/secrets-store"
