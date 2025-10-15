@@ -15,7 +15,7 @@ spec:
    
       containers:
       - name: financeapp
-        image: aksfinance1.azurecr.io/backend:latest
+        image: aksfinance.azurecr.io/backend:latest
         env:
         - name: SQL_CONNECTION
           valueFrom:

@@ -15,7 +15,7 @@ spec:
    
       containers:
       - name: financeapp
-        image: aksfinance1.azurecr.io/frontend:latest
+        image: aksfinance.azurecr.io/frontend:latest
         env: 
          - name: BACKEND_URL
            value: http://financeappbackend-svc.backend.svc.cluster.local
