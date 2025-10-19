@@ -18,42 +18,9 @@ spec:
         image: aksfinance.azurecr.io/backend:latest
         env:
         - name: SQL_CONNECTION
-          valueFrom:
-            secretKeyRef:
-              name: sql-connection # the name of your Secret
-              key: sql_connection_key    # the key inside the Secret
-        volumeMounts:
-          - name: volume112
-            mountPath: "/mnt/secrets-store"
-            readOnly: true
+          value: Server=tcp:sql112.database.windows.net,1433;Initial Catalog=sqldb1;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;Authentication="Active Directory Default";
+       
 
-      volumes:
-        - name: volume112
-          csi:
-            driver: secrets-store.csi.k8s.io
-            readOnly: true
-            volumeAttributes:
-              secretProviderClass: "sqlsecretclass"  
-
-      #   volumeMounts:
-      # - name: secrecy
-      #   mountPath: "/mnt/secrets-store"
-      #   readOnly: true
-        
-        # env:
-        # - name: SQL_CONNECTION
-        #   valueFrom:
-        #     secretKeyRef:
-        #       name: SQL_CONNECTION   # the name of your Secret
-        #       key: SQL_CONNECTION_KEY          # the key inside the Secret
-
-      # volumes:
-      #   - name: secrecy
-      #     csi:
-      #       driver: secrets-store.csi.k8s.io
-      #       readOnly: true
-      #       volumeAttributes:
-      #         secretProviderClass: "sqlsecretclass"
 
 ---
 apiVersion: v1
