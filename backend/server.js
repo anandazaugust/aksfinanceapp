@@ -1,5 +1,6 @@
 import express from "express";
 import sql from "mssql";
+import { DefaultAzureCredential } from "@azure/identity";
 
 const app = express();
 app.use(express.json());
@@ -7,18 +8,37 @@ app.use(express.json());
 const PORT = process.env.PORT || 3000;
 const SQL_CONNECTION = process.env.SQL_CONNECTION;
 
-// Connection pool (reused across requests)
 let poolPromise;
+
+// Function to fetch Entra access token
+async function getAccessToken() {
+  const credential = new DefaultAzureCredential();
+  const token = await credential.getToken("https://database.windows.net/.default");
+  return token.token;
+}
+
+// Connection pool (reused across requests)
 async function getPool() {
   if (!poolPromise) {
     if (!SQL_CONNECTION) {
       throw new Error("SQL_CONNECTION env var not set.");
     }
-    poolPromise = sql.connect(SQL_CONNECTION);
+
+    const accessToken = await getAccessToken();
+
+    const sqlConfig = {
+      connectionString: SQL_CONNECTION,
+      options: { encrypt: true },
+      authentication: {
+        type: "azure-active-directory-access-token",
+        options: { token: accessToken }
+      }
+    };
+
+    poolPromise = sql.connect(sqlConfig);
   }
   return poolPromise;
 }
-
 /**
  * Schema (see sql/01_schema.sql):
  * Transactions(
