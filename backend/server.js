@@ -1,43 +1,39 @@
-import express from "express";
-import sql from "mssql";
-import { DefaultAzureCredential } from "@azure/identity";
+import express from 'express';
+import sql from 'mssql';
+import { DefaultAzureCredential } from '@azure/identity';
 
 const app = express();
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
-const SQL_CONNECTION = process.env.SQL_CONNECTION;
+const SQL_CONNECTION = process.env.SQL_CONNECTION; // e.g., "Server=tcp:sql112.database.windows.net,1433;Initial Catalog=sqldb1;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
 
-let poolPromise;
+let pool;
 
-// Function to fetch Entra access token
-async function getAccessToken() {
-  const credential = new DefaultAzureCredential();
-  const token = await credential.getToken("https://database.windows.net/.default");
-  return token.token;
-}
-
-// Connection pool (reused across requests)
 async function getPool() {
-  if (!poolPromise) {
-    if (!SQL_CONNECTION) {
-      throw new Error("SQL_CONNECTION env var not set.");
-    }
+  if (!pool) {
+    if (!SQL_CONNECTION) throw new Error("SQL_CONNECTION env var not set.");
 
-    const accessToken = await getAccessToken();
+    // Minimal parsing
+    const params = Object.fromEntries(SQL_CONNECTION.split(';')
+      .filter(p => p)
+      .map(p => {
+        const [k, ...v] = p.split('=');
+        return [k.trim().toLowerCase(), v.join('=').trim()];
+      })
+    );
 
-    const sqlConfig = {
-      connectionString: SQL_CONNECTION,
-      options: { encrypt: true },
-      authentication: {
-        type: "azure-active-directory-access-token",
-        options: { token: accessToken }
-      }
-    };
+    const credential = new DefaultAzureCredential();
+    const token = await credential.getToken('https://database.windows.net/.default');
 
-    poolPromise = sql.connect(sqlConfig);
+    pool = await sql.connect({
+      server: params['server'].replace(/^tcp:/, ''),
+      database: params['initial catalog'],
+      options: { encrypt: true, trustServerCertificate: false },
+      authentication: { type: 'azure-active-directory-access-token', options: { token: token.token } }
+    });
   }
-  return poolPromise;
+  return pool;
 }
 /**
  * Schema (see sql/01_schema.sql):
