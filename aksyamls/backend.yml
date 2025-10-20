@@ -12,7 +12,8 @@ spec:
       labels:
         app: financeappbackend
     spec:
-   
+      nodeSelector:
+        agentpool: node1  # <-- This targets the specific node pool
       containers:
       - name: financeapp
         image: aksfinance.azurecr.io/backend:latest
