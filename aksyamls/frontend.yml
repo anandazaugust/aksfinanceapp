@@ -13,7 +13,7 @@ spec:
         app: financeapp
     spec:
       nodeSelector:
-        agentpool: node1  # <-- This targets the specific node pool
+        agentpool: agentpool  # <-- This targets the specific node pool
       containers:
       - name: financeapp
         image: aksfinance.azurecr.io/frontend:latest
