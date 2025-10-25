@@ -1,5 +1,6 @@
 import express from 'express';
 import sql from 'mssql';
+import { DefaultAzureCredential } from '@azure/identity';
 
 const app = express();
 app.use(express.json());
@@ -15,30 +16,134 @@ async function getPool() {
       throw new Error("SQL_CONNECTION_STRING env var not set");
     }
 
+    // Parse the connection string to extract server and database
+    const config = parseConnectionString(SQL_CONNECTION_STRING);
+    
+    const dbConfig = {
+      server: config.server,
+      database: config.database,
+      options: {
+        encrypt: true,
+        trustServerCertificate: false,
+        connectTimeout: 60000, // Increased timeout
+        enableArithAbort: true,
+        requestTimeout: 60000
+      },
+      // Explicit authentication with token provider
+      authentication: {
+        type: 'azure-active-directory-access-token',
+        options: {
+          token: async () => {
+            try {
+              console.log('Acquiring access token for database...');
+              const credential = new DefaultAzureCredential();
+              const token = await credential.getToken('https://database.windows.net/.default');
+              console.log('Token acquired successfully');
+              return token.token;
+            } catch (tokenError) {
+              console.error('❌ Failed to acquire token:', tokenError);
+              throw new Error(`Token acquisition failed: ${tokenError.message}`);
+            }
+          }
+        }
+      },
+      pool: {
+        max: 10,
+        min: 0,
+        idleTimeoutMillis: 30000
+      }
+    };
+
     try {
-      console.log('Establishing database connection...');
-      pool = await sql.connect(SQL_CONNECTION_STRING);
-      console.log('✅ Database connection established');
+      console.log(`Connecting to database: ${config.server}, ${config.database}`);
+      pool = await sql.connect(dbConfig);
+      
+      // Test the connection
+      await pool.request().query('SELECT 1 as test');
+      console.log('✅ Database connection established with managed identity');
     } catch (err) {
       console.error('❌ Database connection failed:', err);
+      
+      // More detailed error logging
+      if (err.code === 'ELOGIN') {
+        console.error('Authentication failed. Check:');
+        console.error('1. Managed identity permissions in SQL');
+        console.error('2. SQL user exists for managed identity');
+        console.error('3. Network connectivity to SQL server');
+      }
       throw err;
     }
   }
   return pool;
 }
 
-// Test database connection on startup
+function parseConnectionString(connectionString) {
+  const params = {};
+  
+  connectionString.split(';').forEach(param => {
+    const [key, ...valueParts] = param.split('=');
+    if (key && valueParts.length > 0) {
+      const value = valueParts.join('=').trim();
+      const normalizedKey = key.trim().toLowerCase();
+      
+      switch (normalizedKey) {
+        case 'server':
+        case 'data source':
+          let server = value.replace(/^tcp:/i, '');
+          const serverParts = server.split(',');
+          params.server = serverParts[0];
+          if (serverParts.length > 1) {
+            params.port = parseInt(serverParts[1]);
+          }
+          break;
+        case 'database':
+        case 'initial catalog':
+          params.database = value;
+          break;
+      }
+    }
+  });
+
+  if (!params.server || !params.database) {
+    throw new Error('Connection string must contain Server and Database parameters');
+  }
+
+  return params;
+}
+
+// Test database connection on startup with retry
 async function initializeApp() {
-  try {
-    await getPool();
-    console.log('✅ App initialized successfully');
-  } catch (error) {
-    console.error('❌ Failed to initialize app:', error);
-    process.exit(1);
+  const maxRetries = 3;
+  let retryCount = 0;
+  
+  while (retryCount < maxRetries) {
+    try {
+      console.log(`Initializing database connection (attempt ${retryCount + 1})...`);
+      await getPool();
+      console.log('✅ App initialized successfully');
+      return;
+    } catch (error) {
+      retryCount++;
+      console.error(`❌ Initialization attempt ${retryCount} failed:`, error.message);
+      
+      if (retryCount < maxRetries) {
+        console.log(`Retrying in 5 seconds...`);
+        await new Promise(resolve => setTimeout(resolve, 5000));
+      } else {
+        console.error('❌ All initialization attempts failed');
+        process.exit(1);
+      }
+    }
   }
 }
 
-// Your existing routes remain exactly the same...
+// Add connection error handling
+sql.on('error', err => {
+  console.error('SQL Pool error:', err);
+  pool = null;
+});
+
+// Your existing routes remain the same...
 app.get("/api/transactions", async (_req, res) => {
   try {
     const pool = await getPool();
@@ -131,7 +236,27 @@ app.get("/health", async (_req, res) => {
     await pool.request().query('SELECT 1 as health');
     res.json({ status: "OK", database: "connected" });
   } catch (err) {
-    res.status(500).json({ status: "ERROR", database: "disconnected" });
+    res.status(500).json({ status: "ERROR", database: "disconnected", error: err.message });
+  }
+});
+
+// Debug endpoint to check authentication
+app.get("/debug/auth", async (_req, res) => {
+  try {
+    const credential = new DefaultAzureCredential();
+    const token = await credential.getToken('https://database.windows.net/.default');
+    
+    res.json({
+      tokenAvailable: !!token,
+      tokenLength: token?.token?.length,
+      expiresOn: token?.expiresOnTimestamp,
+      managedIdentity: true
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      error: "Failed to get token", 
+      message: error.message 
+    });
   }
 });
 
