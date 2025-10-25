@@ -21,7 +21,7 @@ spec:
         image: aksfinance.azurecr.io/backend:1876
         env:
         - name: SQL_CONNECTION
-          value: "Server=sql112.database.windows.net;Database=sqldb1;Encrypt=True;TrustServerCertificate=False;Authentication=ActiveDirectoryDefault;"
+          value: Server=sql112.database.windows.net;Database=sqldb1;Encrypt=True;TrustServerCertificate=False;Authentication=ActiveDirectoryDefault;
           # value: Server=tcp:sql112.database.windows.net,1433;Initial Catalog=sqldb1;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;Authentication="Active Directory Default";
        
 
