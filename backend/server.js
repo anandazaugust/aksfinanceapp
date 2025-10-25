@@ -9,6 +9,7 @@ const PORT = process.env.PORT || 3000;
 const SQL_CONNECTION_STRING = process.env.SQL_CONNECTION_STRING;
 
 let pool;
+let tokenCredential;
 
 async function getPool() {
   if (!pool) {
@@ -19,32 +20,38 @@ async function getPool() {
     // Parse the connection string to extract server and database
     const config = parseConnectionString(SQL_CONNECTION_STRING);
     
+    // Initialize credential once
+    if (!tokenCredential) {
+      tokenCredential = new DefaultAzureCredential();
+    }
+
+    // Get token synchronously before creating config
+    let token;
+    try {
+      console.log('Acquiring access token for database...');
+      const tokenResponse = await tokenCredential.getToken('https://database.windows.net/.default');
+      token = tokenResponse.token;
+      console.log('Token acquired successfully');
+    } catch (tokenError) {
+      console.error('❌ Failed to acquire token:', tokenError);
+      throw new Error(`Token acquisition failed: ${tokenError.message}`);
+    }
+
     const dbConfig = {
       server: config.server,
       database: config.database,
       options: {
         encrypt: true,
         trustServerCertificate: false,
-        connectTimeout: 60000, // Increased timeout
+        connectTimeout: 60000,
         enableArithAbort: true,
         requestTimeout: 60000
       },
-      // Explicit authentication with token provider
+      // Token must be a string, not a function
       authentication: {
         type: 'azure-active-directory-access-token',
         options: {
-          token: async () => {
-            try {
-              console.log('Acquiring access token for database...');
-              const credential = new DefaultAzureCredential();
-              const token = await credential.getToken('https://database.windows.net/.default');
-              console.log('Token acquired successfully');
-              return token.token;
-            } catch (tokenError) {
-              console.error('❌ Failed to acquire token:', tokenError);
-              throw new Error(`Token acquisition failed: ${tokenError.message}`);
-            }
-          }
+          token: token // Direct string value
         }
       },
       pool: {
@@ -64,7 +71,6 @@ async function getPool() {
     } catch (err) {
       console.error('❌ Database connection failed:', err);
       
-      // More detailed error logging
       if (err.code === 'ELOGIN') {
         console.error('Authentication failed. Check:');
         console.error('1. Managed identity permissions in SQL');
@@ -110,6 +116,29 @@ function parseConnectionString(connectionString) {
 
   return params;
 }
+
+// Token refresh logic (tokens expire after 1 hour)
+async function refreshToken() {
+  if (tokenCredential) {
+    try {
+      console.log('Refreshing database token...');
+      const tokenResponse = await tokenCredential.getToken('https://database.windows.net/.default');
+      
+      // Close existing pool to force reconnection with new token
+      if (pool) {
+        await pool.close();
+        pool = null;
+      }
+      
+      console.log('Token refreshed successfully');
+    } catch (error) {
+      console.error('Token refresh failed:', error);
+    }
+  }
+}
+
+// Refresh token every 45 minutes to avoid expiration
+setInterval(refreshToken, 45 * 60 * 1000);
 
 // Test database connection on startup with retry
 async function initializeApp() {
@@ -216,7 +245,7 @@ app.get("/api/summary", async (_req, res) => {
     const result = await pool.request().query(`
       SELECT
         SUM(CASE WHEN Amount > 0 THEN Amount ELSE 0 END) AS totalIncome,
-        SUM(CASE WHEN Amount < 0 THEN -Amount ELSE 0 END) AS totalExpense,
+        SUM(CASE WHEN Amount < 0 THEN -Amount ELSE 0 END) as totalExpense,
         SUM(Amount) AS balance
       FROM Transactions;
     `);
@@ -243,8 +272,10 @@ app.get("/health", async (_req, res) => {
 // Debug endpoint to check authentication
 app.get("/debug/auth", async (_req, res) => {
   try {
-    const credential = new DefaultAzureCredential();
-    const token = await credential.getToken('https://database.windows.net/.default');
+    if (!tokenCredential) {
+      tokenCredential = new DefaultAzureCredential();
+    }
+    const token = await tokenCredential.getToken('https://database.windows.net/.default');
     
     res.json({
       tokenAvailable: !!token,
