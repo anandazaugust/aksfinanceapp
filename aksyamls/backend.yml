@@ -18,7 +18,7 @@ spec:
         agentpool: agentpool  # <-- This targets the specific node pool
       containers:
       - name: financeapp
-        image: aksfinance.azurecr.io/backend:latest
+        image: aksfinance.azurecr.io/backend:1876
         env:
         - name: SQL_CONNECTION
           value: "Server=sql112.database.windows.net;Database=sqldb1;Encrypt=True;TrustServerCertificate=False;Authentication=ActiveDirectoryDefault;"
