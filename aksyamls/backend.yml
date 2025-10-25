@@ -11,7 +11,9 @@ spec:
     metadata:
       labels:
         app: financeappbackend
+        azure.workload.identity/use: "true"
     spec:
+      serviceAccountName: sc-account-03d177e8-3f3d-4009-86b9-c2c688575aef
       nodeSelector:
         agentpool: agentpool  # <-- This targets the specific node pool
       containers:
@@ -19,8 +21,8 @@ spec:
         image: aksfinance.azurecr.io/backend:latest
         env:
         - name: SQL_CONNECTION
-          # value: "Server=sql112.database.windows.net;Database=sqldb1;Encrypt=True;TrustServerCertificate=False;Authentication=ActiveDirectoryDefault;"
-          value: Server=tcp:sql112.database.windows.net,1433;Initial Catalog=sqldb1;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;Authentication="Active Directory Default";
+          value: "Server=sql112.database.windows.net;Database=sqldb1;Encrypt=True;TrustServerCertificate=False;Authentication=ActiveDirectoryDefault;"
+          # value: Server=tcp:sql112.database.windows.net,1433;Initial Catalog=sqldb1;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;Authentication="Active Directory Default";
        
 
 
