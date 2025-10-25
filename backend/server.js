@@ -1,53 +1,44 @@
 import express from 'express';
 import sql from 'mssql';
-import { DefaultAzureCredential } from '@azure/identity';
 
 const app = express();
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
-const SQL_CONNECTION = process.env.SQL_CONNECTION; // e.g., "Server=tcp:sql112.database.windows.net,1433;Initial Catalog=sqldb1;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
+const SQL_CONNECTION_STRING = process.env.SQL_CONNECTION_STRING;
 
 let pool;
 
 async function getPool() {
   if (!pool) {
-    if (!SQL_CONNECTION) throw new Error("SQL_CONNECTION env var not set.");
+    if (!SQL_CONNECTION_STRING) {
+      throw new Error("SQL_CONNECTION_STRING env var not set");
+    }
 
-    // Minimal parsing
-    const params = Object.fromEntries(SQL_CONNECTION.split(';')
-      .filter(p => p)
-      .map(p => {
-        const [k, ...v] = p.split('=');
-        return [k.trim().toLowerCase(), v.join('=').trim()];
-      })
-    );
-
-    const credential = new DefaultAzureCredential();
-    const token = await credential.getToken('https://database.windows.net/.default');
-
-    pool = await sql.connect({
-      server: params['server'].replace(/^tcp:/, ''),
-      database: params['initial catalog'],
-      options: { encrypt: true, trustServerCertificate: false },
-      authentication: { type: 'azure-active-directory-access-token', options: { token: token.token } }
-    });
+    try {
+      console.log('Establishing database connection...');
+      pool = await sql.connect(SQL_CONNECTION_STRING);
+      console.log('✅ Database connection established');
+    } catch (err) {
+      console.error('❌ Database connection failed:', err);
+      throw err;
+    }
   }
   return pool;
 }
-/**
- * Schema (see sql/01_schema.sql):
- * Transactions(
- *   Id INT IDENTITY PRIMARY KEY,
- *   TxDate DATE NOT NULL,
- *   Category NVARCHAR(100) NOT NULL,
- *   Note NVARCHAR(400) NULL,
- *   Amount DECIMAL(18,2) NOT NULL, -- positive for income, negative for expense
- *   CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
- * )
- */
 
-// List transactions (latest first)
+// Test database connection on startup
+async function initializeApp() {
+  try {
+    await getPool();
+    console.log('✅ App initialized successfully');
+  } catch (error) {
+    console.error('❌ Failed to initialize app:', error);
+    process.exit(1);
+  }
+}
+
+// Your existing routes remain exactly the same...
 app.get("/api/transactions", async (_req, res) => {
   try {
     const pool = await getPool();
@@ -67,24 +58,21 @@ app.get("/api/transactions", async (_req, res) => {
     res.json(result.recordset);
   } catch (err) {
     console.error("GET /api/transactions error:", err);
+    if (err.code === 'ELOGIN' || err.code === 'ESOCKET') {
+      pool = null;
+    }
     res.status(500).json({ error: "Failed to fetch transactions" });
   }
 });
 
-// Create a transaction
 app.post("/api/transactions", async (req, res) => {
   try {
     const { txDate, category, note, amount, type } = req.body;
-
-    // Basic validation
     if (!txDate || !category || typeof amount !== "number") {
       return res.status(400).json({ error: "txDate, category, amount are required" });
     }
 
-    // By default treat as expense → store negative
     let finalAmount = -Math.abs(amount);
-
-    // If explicitly marked income, store as positive
     if (type === "income") {
       finalAmount = Math.abs(amount);
     }
@@ -110,11 +98,13 @@ app.post("/api/transactions", async (req, res) => {
     res.status(201).json(result.recordset[0]);
   } catch (err) {
     console.error("POST /api/transactions error:", err);
+    if (err.code === 'ELOGIN' || err.code === 'ESOCKET') {
+      pool = null;
+    }
     res.status(500).json({ error: "Failed to create transaction" });
   }
 });
 
-// Summary (income, expense, balance)
 app.get("/api/summary", async (_req, res) => {
   try {
     const pool = await getPool();
@@ -128,13 +118,26 @@ app.get("/api/summary", async (_req, res) => {
     res.json(result.recordset[0] || { totalIncome: 0, totalExpense: 0, balance: 0 });
   } catch (err) {
     console.error("GET /api/summary error:", err);
+    if (err.code === 'ELOGIN' || err.code === 'ESOCKET') {
+      pool = null;
+    }
     res.status(500).json({ error: "Failed to compute summary" });
   }
 });
 
-// Liveness
-app.get("/health", (_req, res) => res.send("OK"));
+app.get("/health", async (_req, res) => {
+  try {
+    const pool = await getPool();
+    await pool.request().query('SELECT 1 as health');
+    res.json({ status: "OK", database: "connected" });
+  } catch (err) {
+    res.status(500).json({ status: "ERROR", database: "disconnected" });
+  }
+});
 
-app.listen(PORT, () => {
-  console.log(`✅ Finance backend listening on ${PORT}`);
+// Initialize app
+initializeApp().then(() => {
+  app.listen(PORT, () => {
+    console.log(`✅ Finance backend listening on ${PORT}`);
+  });
 });
