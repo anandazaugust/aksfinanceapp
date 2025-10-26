@@ -17,6 +17,10 @@ parameters:
     type: boolean
     default: true
 
+  - name: deploysvc
+    type: boolean
+    default: false
+
   - name: whichend
     displayName: "Which component to deploy?"
     type: string
