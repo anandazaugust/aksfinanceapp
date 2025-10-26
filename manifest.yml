@@ -101,7 +101,16 @@ jobs:
                   kubectl apply -f ./aksyamls/secretprovider.yml 
         
 
-
+      - task: AzureCLI@2
+        condition: ${{ eq(parameters.deploysvc, true) }}
+        displayName: 'apply svc manifest'
+        inputs:
+          azureSubscription: 'acrpushv1'
+          scriptType: 'bash'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+            
+                  kubectl apply -f ./aksyamls/svcaccnt.yml
 
       - task: AzureCLI@2
         condition: ${{ eq(parameters.deploymyapp, true) }}
