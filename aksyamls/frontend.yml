@@ -15,7 +15,7 @@ spec:
    
       containers:
       - name: financeapp
-        image: aksfinance.azurecr.io/frontend:1912
+        image: aksfinance.azurecr.io/frontend:1911
            
         env: 
          - name: BACKEND_URL
