@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demoapp-imperative2
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: demoapp-imperative2
+  template:
+    metadata:
+      labels:
+        app: demoapp-imperative2
+    spec:
+      serviceAccountName: workload-identity-sa2
+      nodeSelector:
+        agentpool: agentpool  # <-- This targets the specific node pool
+      containers:
+      - name: c1
+        image: nginxdemos/hello
