@@ -11,9 +11,9 @@ spec:
     metadata:
       labels:
         app: financeappbackend
-        # azure.workload.identity/use: "true"
+        azure.workload.identity/use: "true"
     spec:
-      # serviceAccountName: workload-identity-sa2
+      serviceAccountName: workload-identity-sa2
       nodeSelector:
         agentpool: agentpool  # <-- This targets the specific node pool
       containers:
