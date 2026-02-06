@@ -27,13 +27,13 @@ jobs:
           scriptLocation: 'inlineScript'
           inlineScript: |
            
-            az aks get-credentials --resource-group testrg --name ${{ parameters.clustername }}
+            az aks get-credentials --resource-group testrg --name aks-cluster-1
             kubelogin convert-kubeconfig -l azurecli
           
 
 
       - task: AzureCLI@2
-        condition:  ${{ eq(parameters.deploynamespace, true) }}
+        
         inputs:
           azureSubscription: 'acrpushv1'
           scriptType: 'bash'
