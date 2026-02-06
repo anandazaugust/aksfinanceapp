@@ -1,0 +1,45 @@
+
+
+
+
+trigger: none
+pr: none
+pool:
+  vmImage: ubuntu-latest
+
+jobs: 
+
+  - job: aksdeploy
+    displayName: AKSdepoy
+    timeoutInMinutes: 10 # how long to run the job before automatically cancelling
+    cancelTimeoutInMinutes: 2 # how much time to give 'run always even if cancelled tasks' before stopping them
+    steps:
+      - task: KubeloginInstaller@0
+        inputs:
+          kubeloginVersion: 'latest'
+        displayName: installkubelogin
+      
+      - task: AzureCLI@2
+        displayName: 'Get AKS credentials'
+        inputs:
+          azureSubscription: 'acrpushv1'
+          scriptType: 'bash'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+           
+            az aks get-credentials --resource-group testrg --name ${{ parameters.clustername }}
+            kubelogin convert-kubeconfig -l azurecli
+          
+
+
+      - task: AzureCLI@2
+        condition:  ${{ eq(parameters.deploynamespace, true) }}
+        inputs:
+          azureSubscription: 'acrpushv1'
+          scriptType: 'bash'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+            
+            az aks command invoke --resource-group testrg --name aks-cluster-1 --command "kubectl get pods" 
+            
+      
