@@ -27,7 +27,7 @@ jobs:
           scriptLocation: 'inlineScript'
           inlineScript: |
            
-            az aks get-credentials --resource-group testrg --name aks-cluster-1
+            az aks get-credentials --resource-group testrg --name aks-private-1
             kubelogin convert-kubeconfig -l azurecli
           
 
@@ -40,7 +40,7 @@ jobs:
           scriptLocation: 'inlineScript'
           inlineScript: |
             
-            az aks command invoke --resource-group testrg --name aks-cluster-1 --command "kubectl get pods" 
-            az aks command invoke --resource-group testrg --name aks-cluster-1 --command "kubectl apply -f frontend.yml" --file ./aksyamls/frontend.yml
+            az aks command invoke --resource-group testrg --name aks-private-1 --command "kubectl get pods" 
+            az aks command invoke --resource-group testrg --name aks-private-1 --command "kubectl apply -f frontend.yml" --file ./aksyamls/frontend.yml
             
       
