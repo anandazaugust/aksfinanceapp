@@ -16,7 +16,7 @@ spec:
         agentpool: agentpool  # <-- This targets the specific node pool
       containers:
       - name: financeapp
-        image: aksfinance.azurecr.io/frontend:latest
+        image: aksfinanceapp.azurecr.io/frontend:latest
            
         env: 
          - name: BACKEND_URL
