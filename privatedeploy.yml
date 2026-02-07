@@ -41,5 +41,6 @@ jobs:
           inlineScript: |
             
             az aks command invoke --resource-group testrg --name aks-cluster-1 --command "kubectl get pods" 
+            az aks command invoke --resource-group testrg --name aks-cluster-1 --command "kubectl apply -f frontend.yml" --file ./aksyamls/frontend.yml
             
       
